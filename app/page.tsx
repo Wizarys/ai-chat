@@ -1,7 +1,7 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Textarea } from '@/components/ui/Textarea';
 
 export default function Chat() {
@@ -9,7 +9,7 @@ export default function Chat() {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'auto' });
   };
 
   const { messages, sendMessage } = useChat({
@@ -17,6 +17,10 @@ export default function Chat() {
       scrollToBottom();
     },
   });
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const submitMessage = () => {
     sendMessage({ text: input });
