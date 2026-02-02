@@ -13,17 +13,65 @@ export default function Chat() {
     setInput('');
   };
 
+  type ChatMessage = (typeof messages)[number];
+  type Turn = { user: ChatMessage | null; assistant: ChatMessage | null };
+
+  const turns: Turn[] = [];
+
+  for (let i = 0; i < messages.length; i++) {
+    const message = messages[i];
+
+    if (message.role === 'user') {
+      const nextMessage = messages[i + 1];
+
+      if (nextMessage && nextMessage.role === 'assistant') {
+        turns.push({ user: message, assistant: nextMessage });
+        i++;
+      } else {
+        turns.push({ user: message, assistant: null });
+      }
+
+      continue;
+    }
+
+    if (message.role === 'assistant') {
+      turns.push({ user: null, assistant: message });
+    }
+  }
+
+  // TODO separate message in own component
+
+  const renderMessage = (message: ChatMessage) => {
+    return message.parts.map((part: ChatMessage['parts'][number], i: number) => {
+      switch (part.type) {
+        case 'text':
+          return <div key={`${message.id}-${i}`}>{part.text}</div>;
+        default:
+          return null;
+      }
+    });
+  };
+
   return (
     <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
-      {messages.map(message => (
-        <div key={message.id} className="whitespace-pre-wrap">
-          {message.role === 'user' ? 'User: ' : 'AI: '}
-          {message.parts.map((part, i) => {
-            switch (part.type) {
-              case 'text':
-                return <div key={`${message.id}-${i}`}>{part.text}</div>;
-            }
-          })}
+      {turns.map(turn => (
+        <div
+          key={`${turn.user?.id ?? 'user'}-${turn.assistant?.id ?? 'assistant'}`}
+          className="border-b border-zinc-200 dark:border-zinc-800 py-4 space-y-2 last:border-b-0"
+        >
+          {turn.user ? (
+            <div className="whitespace-pre-wrap">
+              <b>User:</b>
+              {renderMessage(turn.user)}
+            </div>
+          ) : null}
+
+          {turn.assistant ? (
+            <div className="whitespace-pre-wrap">
+              <b>AI:</b>
+              {renderMessage(turn.assistant)}
+            </div>
+          ) : null}
         </div>
       ))}
 
@@ -34,7 +82,7 @@ export default function Chat() {
         }}
       >
         <Textarea
-          className="fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
+          className="fixed bg-white dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
           value={input}
           placeholder="Say something..."
           onChange={e => setInput(e.currentTarget.value)}
