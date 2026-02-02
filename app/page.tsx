@@ -1,31 +1,50 @@
-// import Image from "next/image";
-import { Button } from "@/components/ui/Button";
-import { Textarea } from "@/components/ui/Textarea";
+'use client';
 
-export default function Home() {
+import { useChat } from '@ai-sdk/react';
+import { useState } from 'react';
+import { Textarea } from '@/components/ui/Textarea';
+
+export default function Chat() {
+  const [input, setInput] = useState('');
+  const { messages, sendMessage } = useChat();
+
+  const submitMessage = () => {
+    sendMessage({ text: input });
+    setInput('');
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <div className="w-full max-w-md space-y-2 text-left">
-          <label
-            htmlFor="message"
-            className="text-sm font-medium text-zinc-900 dark:text-zinc-100"
-          >
-            Quick note
-          </label>
-          <Textarea
-            id="message"
-            placeholder="Share what's on your mind..."
-            className="min-h-24"
-          />
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            This is just a UI example.
-          </p>
-          <div className="pt-2">
-            <Button type="button">Send message</Button>
-          </div>
-        </div>       
-      </main>
+    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
+      {messages.map(message => (
+        <div key={message.id} className="whitespace-pre-wrap">
+          {message.role === 'user' ? 'User: ' : 'AI: '}
+          {message.parts.map((part, i) => {
+            switch (part.type) {
+              case 'text':
+                return <div key={`${message.id}-${i}`}>{part.text}</div>;
+            }
+          })}
+        </div>
+      ))}
+
+      <form
+        onSubmit={e => {
+          e.preventDefault();
+          submitMessage();
+        }}
+      >
+        <Textarea
+          className="fixed dark:bg-zinc-900 bottom-0 w-full max-w-md p-2 mb-8 border border-zinc-300 dark:border-zinc-800 rounded shadow-xl"
+          value={input}
+          placeholder="Say something..."
+          onChange={e => setInput(e.currentTarget.value)}
+          onKeyDown={e => {
+            if (e.key !== 'Enter' || e.shiftKey) return;
+            e.preventDefault();
+            submitMessage();
+          }}
+        />
+      </form>
     </div>
   );
 }
